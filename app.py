@@ -19,6 +19,12 @@ class User(UserMixin, db.Model): # B.1 line 17-20
     username = db.Column(db.String(100), unique=True, nullable=False) 
     password = db.Column(db.String(200), nullable=False) 
 
+#B.3 Nail
+def securityHeaderTambahan(response):
+    response.headers['X-Frame-Options'] = 'DENY'  # tambahan pencegahan dirender iframe
+    response.headers['Content-Security-Policy'] = "frame-ancestors 'none';"  # tambahan untuk CSP framing
+    return response
+
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)

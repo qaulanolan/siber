@@ -1,4 +1,6 @@
 <?php
+header("X-Frame-Options: DENY");    //B.3 Nail
+header("Content-Security-Policy: frame-ancestors 'none';");     //B.3 Nail
 // Fungsi untuk membuka koneksi ke database SQLite3
 function connectDB() {
     // Membuka koneksi ke database SQLite

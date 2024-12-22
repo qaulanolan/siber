@@ -1,4 +1,6 @@
 <?php
+header("X-Frame-Options: DENY");    //B.3 Nail
+header("Content-Security-Policy: frame-ancestors 'none';");     //B.3 Nail
 // add.php - Form untuk menambahkan data siswa
 include 'app.php'; // Menyertakan file koneksi database
 
