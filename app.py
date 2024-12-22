@@ -34,7 +34,7 @@ class Student(db.Model):
     def __repr__(self):
         return f'<Student {self.name}>'
 
-@login_manager.user_loader # B.1 (line 31-33)
+@login_manager.user_loader # B.1 line 37-39
 def load_user(user_id): 
     return User.query.get(int(user_id)) 
 
@@ -88,7 +88,7 @@ def logout():
 @app.route('/add', methods=['POST'])
 @login_required # B.1
 def add_student():
-    # B.2 (line 86-95) Fungsi untuk memvalidasi input pengguna
+    # B.2 (line 91-96) Fungsi untuk memvalidasi input pengguna
     def validate_input(name, age, grade):
         if not name.isalnum() or not grade.isalpha():  # Memastikan nama alfanumerik dan grade hanya huruf
             raise ValueError("Invalid input format")  # Mengembalikan error jika input tidak valid
@@ -108,7 +108,7 @@ def add_student():
     cursor = connection.cursor()
 
     # RAW Query
-    # B.4 (line 106-110) Menggunakan parameterisasi query untuk mencegah SQL Injection
+    # B.4 (line 112-116) Menggunakan parameterisasi query untuk mencegah SQL Injection
     db.session.execute(
         text("INSERT INTO student (name, age, grade) VALUES (:name, :age, :grade)"),
         {'name': name, 'age': age, 'grade': grade} # Parameter yang aman
@@ -124,7 +124,7 @@ def add_student():
 @app.route('/delete/<string:id>') 
 @login_required # B.1
 def delete_student(id):
-    # B.4 line 122-126
+    # B.4 line 128-132
     db.session.execute( 
         text("DELETE FROM student WHERE id=:id"),
         {'id': id}  # Parameter aman
@@ -139,7 +139,7 @@ def delete_student(id):
 @login_required # B.1
 def edit_student(id):
     if request.method == 'POST':
-        # B.2 (line 137-146) Fungsi untuk memvalidasi input pengguna
+        # B.2 (line 143-152) Fungsi untuk memvalidasi input pengguna
         def validate_input(name, age, grade):
             if not name.isalnum() or not grade.isalpha():  # Memastikan nama alfanumerik dan grade hanya huruf
                 raise ValueError("Invalid input format")  # Mengembalikan error jika input tidak valid
@@ -155,7 +155,7 @@ def edit_student(id):
         # grade = request.form['grade']
         
         # RAW Query
-        # B.4 (line 153-157) Menggunakan parameterisasi query untuk mencegah SQL Injection
+        # B.4 (line 159-163) Menggunakan parameterisasi query untuk mencegah SQL Injection
         db.session.execute(
             text("UPDATE student SET name=:name, age=:age, grade=:grade WHERE id=:id"),
             {'name': name, 'age': age, 'grade': grade, 'id': id}  # Parameter yang aman
