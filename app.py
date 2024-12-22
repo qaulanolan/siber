@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash  # B.1
 from html import escape # B.2 Import fungsi escape untuk sanitasi input
 import sqlite3
 
@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app) # B.1
 login_manager.login_view = 'login' # B.1
 
-class User(UserMixin, db.Model): # B.1 line 16-19
+class User(UserMixin, db.Model): # B.1 line 17-20
     id = db.Column(db.Integer, primary_key=True) 
     username = db.Column(db.String(100), unique=True, nullable=False) 
     password = db.Column(db.String(200), nullable=False) 
@@ -28,7 +28,7 @@ class Student(db.Model):
     def __repr__(self):
         return f'<Student {self.name}>'
 
-@login_manager.user_loader # B.1 (line 30-32)
+@login_manager.user_loader # B.1 (line 31-33)
 def load_user(user_id): 
     return User.query.get(int(user_id)) 
 
@@ -39,7 +39,7 @@ def index():
     students = db.session.execute(text('SELECT * FROM student')).fetchall()
     return render_template('index.html', students=students)
 
-@app.route('/register', methods=['GET', 'POST']) # B.1 line 41-79
+@app.route('/register', methods=['GET', 'POST']) # B.1 line 42-80
 def register():
     if request.method == 'POST':
         username = request.form['username']
@@ -133,7 +133,7 @@ def delete_student(id):
 @login_required # B.1
 def edit_student(id):
     if request.method == 'POST':
-        # B.2 (line 131-140) Fungsi untuk memvalidasi input pengguna
+        # B.2 (line 137-146) Fungsi untuk memvalidasi input pengguna
         def validate_input(name, age, grade):
             if not name.isalnum() or not grade.isalpha():  # Memastikan nama alfanumerik dan grade hanya huruf
                 raise ValueError("Invalid input format")  # Mengembalikan error jika input tidak valid
@@ -149,7 +149,7 @@ def edit_student(id):
         # grade = request.form['grade']
         
         # RAW Query
-        # B.4 (line 152-157) Menggunakan parameterisasi query untuk mencegah SQL Injection
+        # B.4 (line 153-157) Menggunakan parameterisasi query untuk mencegah SQL Injection
         db.session.execute(
             text("UPDATE student SET name=:name, age=:age, grade=:grade WHERE id=:id"),
             {'name': name, 'age': age, 'grade': grade, 'id': id}  # Parameter yang aman
