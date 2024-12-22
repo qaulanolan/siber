@@ -3,8 +3,8 @@
 // Fungsi untuk membuka koneksi ke database SQLite3, select, update, delete, dan add
 // function connectDB() {
     // Membuka koneksi ke database SQLite
-    header("X-Frame-Options: DENY");
-    header("Content-Security-Policy: frame-ancestors 'none';");
+    header("X-Frame-Options: DENY");    //B.3 Nail
+    header("Content-Security-Policy: frame-ancestors 'none';");     //B.3 Nail
     include 'app.php';
     $students=selectStudents();
     
