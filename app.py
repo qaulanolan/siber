@@ -3,20 +3,21 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from html import escape # B.2 Import fungsi escape untuk sanitasi input
 import sqlite3
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = 'your_secret_key' # B.1
 db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager = LoginManager(app) # B.1
+login_manager.login_view = 'login' # B.1
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
+class User(UserMixin, db.Model): # B.1 line 16-19
+    id = db.Column(db.Integer, primary_key=True) 
+    username = db.Column(db.String(100), unique=True, nullable=False) 
+    password = db.Column(db.String(200), nullable=False) 
 
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,18 +28,18 @@ class Student(db.Model):
     def __repr__(self):
         return f'<Student {self.name}>'
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+@login_manager.user_loader # B.1 (line 30-32)
+def load_user(user_id): 
+    return User.query.get(int(user_id)) 
 
 @app.route('/')
-@login_required
+@login_required # B.1
 def index():
     # RAW Query
     students = db.session.execute(text('SELECT * FROM student')).fetchall()
     return render_template('index.html', students=students)
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST']) # B.1 line 41-79
 def register():
     if request.method == 'POST':
         username = request.form['username']
@@ -72,56 +73,90 @@ def login():
     return render_template('login.html')
 
 @app.route('/logout')
-@login_required
+@login_required # B.1
 def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
 @app.route('/add', methods=['POST'])
-@login_required
+@login_required # B.1
 def add_student():
-    name = request.form['name']
+    # B.2 (line 86-95) Fungsi untuk memvalidasi input pengguna
+    def validate_input(name, age, grade):
+        if not name.isalnum() or not grade.isalpha():  # Memastikan nama alfanumerik dan grade hanya huruf
+            raise ValueError("Invalid input format")  # Mengembalikan error jika input tidak valid
+        if not age.isdigit() or int(age) < 0 or int(age) > 150:  # Memastikan usia valid 
+            raise ValueError("Invalid age")  # Mengembalikan error jika usia tidak valid
+
+    name = escape(request.form['name']) # Membersihkan input dari karakter HTML berbahaya untuk mencegah XSS
     age = request.form['age']
     grade = request.form['grade']
+    validate_input(name, age, grade)
+    # name = request.form['name']
+    # age = request.form['age']
+    # grade = request.form['grade']
     
 
     connection = sqlite3.connect('instance/students.db')
     cursor = connection.cursor()
 
     # RAW Query
-    # db.session.execute(
-    #     text("INSERT INTO student (name, age, grade) VALUES (:name, :age, :grade)"),
-    #     {'name': name, 'age': age, 'grade': grade}
-    # )
-    # db.session.commit()
-    query = f"INSERT INTO student (name, age, grade) VALUES ('{name}', {age}, '{grade}')"
-    cursor.execute(query)
-    connection.commit()
+    # B.4 (line 106-110) Menggunakan parameterisasi query untuk mencegah SQL Injection
+    db.session.execute(
+        text("INSERT INTO student (name, age, grade) VALUES (:name, :age, :grade)"),
+        {'name': name, 'age': age, 'grade': grade} # Parameter yang aman
+    )
+    db.session.commit() # Menyimpan perubahan ke database
+    # query = f"INSERT INTO student (name, age, grade) VALUES ('{name}', {age}, '{grade}')"
+    # cursor.execute(query)
+    # connection.commit()
     connection.close()
     return redirect(url_for('index'))
 
 
 @app.route('/delete/<string:id>') 
-@login_required
+@login_required # B.1
 def delete_student(id):
-    # RAW Query
-    db.session.execute(text(f"DELETE FROM student WHERE id={id}"))
-    db.session.commit()
+    # B.4 line 122-126
+    db.session.execute( 
+        text("DELETE FROM student WHERE id=:id"),
+        {'id': id}  # Parameter aman
+    )
+    db.session.commit()  # Menyimpan perubahan ke database
+    # db.session.execute(text(f"DELETE FROM student WHERE id={id}"))
+    # db.session.commit()
     return redirect(url_for('index'))
 
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
-@login_required
+@login_required # B.1
 def edit_student(id):
     if request.method == 'POST':
-        name = request.form['name']
+        # B.2 (line 131-140) Fungsi untuk memvalidasi input pengguna
+        def validate_input(name, age, grade):
+            if not name.isalnum() or not grade.isalpha():  # Memastikan nama alfanumerik dan grade hanya huruf
+                raise ValueError("Invalid input format")  # Mengembalikan error jika input tidak valid
+            if not age.isdigit() or int(age) < 0 or int(age) > 150:  # Memastikan usia valid 
+                raise ValueError("Invalid age")  # Mengembalikan error jika usia tidak valid
+    
+        name = escape(request.form['name']) # Membersihkan input dari karakter HTML berbahaya untuk mencegah XSS
         age = request.form['age']
         grade = request.form['grade']
+        validate_input(name, age, grade)
+        # name = request.form['name']
+        # age = request.form['age']
+        # grade = request.form['grade']
         
         # RAW Query
-        db.session.execute(text(f"UPDATE student SET name='{name}', age={age}, grade='{grade}' WHERE id={id}"))
-        db.session.commit()
+        # B.4 (line 152-157) Menggunakan parameterisasi query untuk mencegah SQL Injection
+        db.session.execute(
+            text("UPDATE student SET name=:name, age=:age, grade=:grade WHERE id=:id"),
+            {'name': name, 'age': age, 'grade': grade, 'id': id}  # Parameter yang aman
+        )
+        db.session.commit()  # Menyimpan perubahan ke database
+        # db.session.execute(text(f"UPDATE student SET name='{name}', age={age}, grade='{grade}' WHERE id={id}"))
+        # db.session.commit()
         return redirect(url_for('index'))
     else:
         # RAW Query
